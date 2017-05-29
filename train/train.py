@@ -157,7 +157,7 @@ def train():
     sess.run(init_op)
 
     summary_op = tf.summary.merge_all()
-    logdir = os.path.join(FLAGS.train_dir, strftime('%Y%m%d%H%M%S', gmtime()))
+    logdir = os.path.join(FLAGS.train_dir, "lambda=0.2",strftime('%Y%m%d%H%M%S', gmtime()))
     if not os.path.exists(logdir):
         os.makedirs(logdir)
     summary_writer = tf.summary.FileWriter(logdir, graph=sess.graph)
