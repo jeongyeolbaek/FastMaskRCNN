@@ -121,6 +121,10 @@ tf.app.flags.DEFINE_float('rmsprop_momentum', 0.99, 'Momentum.')
 
 tf.app.flags.DEFINE_float('rmsprop_decay', 0.99, 'Decay term for RMSProp.')
 
+tf.app.flags.DEFINE_float(
+    'regularization_weight', 0.5,
+    '')
+
 #######################
 # Learning Rate Flags #
 #######################

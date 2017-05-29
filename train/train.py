@@ -39,7 +39,7 @@ def solve(global_step):
     regular_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
     regular_loss = tf.add_n(regular_losses)
     out_loss = tf.add_n(losses)
-    total_loss = tf.add_n(losses + regular_losses)
+    total_loss = (1-FLAGS.regularization_weight)*out_loss + FLAGS.regularization_weight*regular_loss
 
     tf.summary.scalar('total_loss', total_loss)
     tf.summary.scalar('out_loss', out_loss)
@@ -206,8 +206,7 @@ def train():
             summary_writer.flush()
 
         if (step % 10000 == 0 or step + 1 == FLAGS.max_iters) and step != 0:
-            checkpoint_path = os.path.join(FLAGS.train_dir, 
-                                           FLAGS.dataset_name + '_' + FLAGS.network + '_model.ckpt')
+            checkpoint_path = os.path.join(logdir,'/model.ckpt')
             saver.save(sess, checkpoint_path, global_step=step)
 
         if coord.should_stop():

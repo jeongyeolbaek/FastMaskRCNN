@@ -105,9 +105,6 @@ def train():
                                     gt_boxes=gt_boxes, gt_masks=gt_masks,
                                     loss_weights=[0.2, 0.2, 1.0, 0.2, 1.0])
 
-    cropped_rois = tf.get_collection('__CROPPED__')[0]
-    transposed = tf.get_collection('__TRANSPOSED__')[0]
-
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.8)
     sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
