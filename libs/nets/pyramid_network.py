@@ -400,6 +400,7 @@ def build_losses(pyramid, outputs, gt_boxes, gt_masks,
             rpn_box_loss = tf.reduce_sum(rpn_box_loss, axis=1)
             rpn_box_loss = rpn_box_lw * tf.reduce_mean(rpn_box_loss) 
             tf.add_to_collection(tf.GraphKeys.LOSSES, rpn_box_loss)
+            tf.summary.scalar('rpn_box_loss', rpn_box_loss)
             rpn_box_losses.append(rpn_box_loss)
 
             # NOTE: examples with negative labels are ignore when compute one_hot_encoding and entropy losses 
@@ -408,7 +409,8 @@ def build_losses(pyramid, outputs, gt_boxes, gt_masks,
             # the BEST practise still should be gathering all none-negative examples
             labels = slim.one_hot_encoding(labels, 2, on_value=1.0, off_value=0.0) # this will set -1 label to all zeros
             rpn_cls_loss = rpn_cls_lw * tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=classes) 
-            rpn_cls_loss = tf.reduce_mean(rpn_cls_loss) 
+            rpn_cls_loss = tf.reduce_mean(rpn_cls_loss)
+            tf.summary.scalar('rpn_cls_loss', rpn_cls_loss)
             tf.add_to_collection(tf.GraphKeys.LOSSES, rpn_cls_loss)
             rpn_cls_losses.append(rpn_cls_loss)
             
