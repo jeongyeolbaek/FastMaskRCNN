@@ -180,11 +180,7 @@ def train():
         
         start_time = time.time()
 
-        s_, tot_loss, reg_lossnp, img_id_str, \
-        rpn_box_loss, rpn_cls_loss, refined_box_loss, refined_cls_loss, mask_loss, \
-        gt_boxesnp, \
-        rpn_batch_pos, rpn_batch, refine_batch_pos, refine_batch, mask_batch_pos, mask_batch = \
-                     sess.run([update_op, total_loss, regular_loss, img_id] + 
+        s_, tot_loss, reg_lossnp, img_id_str, rpn_box_loss, rpn_cls_loss, gt_boxesnp, rpn_batch_pos, rpn_batch = sess.run([update_op, total_loss, regular_loss, img_id] +
                               losses + 
                               [gt_boxes] + 
                               batch_info )
@@ -192,13 +188,13 @@ def train():
         duration_time = time.time() - start_time
         if step % 1 == 0: 
             print ( """iter %d: image-id:%07d, time:%.3f(sec), regular_loss: %.6f, """
-                    """total-loss %.4f(%.4f, %.4f, %.6f, %.4f, %.4f), """
+                    """total-loss %.4f(%.4f, %.4f,_,_,_), """
                     """instances: %d, """
-                    """batch:(%d|%d, %d|%d, %d|%d)""" 
+                    """batch:(%d|%d, _|_, _|_)"""
                    % (step, img_id_str, duration_time, reg_lossnp, 
-                      tot_loss, rpn_box_loss, rpn_cls_loss, refined_box_loss, refined_cls_loss, mask_loss,
+                      tot_loss, rpn_box_loss, rpn_cls_loss, #refined_box_loss, refined_cls_loss, mask_loss,
                       gt_boxesnp.shape[0], 
-                      rpn_batch_pos, rpn_batch, refine_batch_pos, refine_batch, mask_batch_pos, mask_batch))
+                      rpn_batch_pos, rpn_batch))#, refine_batch_pos, refine_batch, mask_batch_pos, mask_batch))
 
             if np.isnan(tot_loss) or np.isinf(tot_loss):
                 print (gt_boxesnp)

@@ -339,16 +339,16 @@ def build_losses(pyramid, outputs, gt_boxes, gt_masks,
   # losses for pyramid
   losses = []
   rpn_box_losses, rpn_cls_losses = [], []
-  refined_box_losses, refined_cls_losses = [], []
-  mask_losses = []
+  # refined_box_losses, refined_cls_losses = [], []
+  # mask_losses = []
   
   # watch some info during training
   rpn_batch = []
-  refine_batch = []
-  mask_batch = []
+  # refine_batch = []
+  # mask_batch = []
   rpn_batch_pos = []
-  refine_batch_pos = []
-  mask_batch_pos = []
+  # refine_batch_pos = []
+  # mask_batch_pos = []
 
   arg_scope = _extra_conv_arg_scope(activation_fn=None)
   with slim.arg_scope(arg_scope):
@@ -416,96 +416,96 @@ def build_losses(pyramid, outputs, gt_boxes, gt_masks,
         ### refined loss
         # 1. encode ground truth
         # 2. compute distances
-        rois = outputs['roi']['box']
+        # rois = outputs['roi']['box']
         
-        boxes = outputs['refined']['box']
-        classes = outputs['refined']['cls']
-        labels, bbox_targets, bbox_inside_weights = \
-          roi_encoder(gt_boxes, rois, num_classes, scope='ROIEncoder')
-
-        labels, classes, boxes, bbox_targets, bbox_inside_weights = \
-                _filter_negative_samples(tf.reshape(labels, [-1]),[
-                    tf.reshape(labels, [-1]),
-                    tf.reshape(classes, [-1, num_classes]),
-                    tf.reshape(boxes, [-1, num_classes * 4]),
-                    tf.reshape(bbox_targets, [-1, num_classes * 4]),
-                    tf.reshape(bbox_inside_weights, [-1, num_classes * 4])
-                    ] )
+        # boxes = outputs['refined']['box']
+        # classes = outputs['refined']['cls']
+        # labels, bbox_targets, bbox_inside_weights = \
+        #   roi_encoder(gt_boxes, rois, num_classes, scope='ROIEncoder')
+        #
+        # labels, classes, boxes, bbox_targets, bbox_inside_weights = \
+        #         _filter_negative_samples(tf.reshape(labels, [-1]),[
+        #             tf.reshape(labels, [-1]),
+        #             tf.reshape(classes, [-1, num_classes]),
+        #             tf.reshape(boxes, [-1, num_classes * 4]),
+        #             tf.reshape(bbox_targets, [-1, num_classes * 4]),
+        #             tf.reshape(bbox_inside_weights, [-1, num_classes * 4])
+        #             ] )
         # frac, frac_ = _get_valid_sample_fraction(labels, 1)
-        refine_batch.append(
-                tf.reduce_sum(tf.cast(
-                    tf.greater_equal(labels, 0), tf.float32
-                    )))
-        refine_batch_pos.append(
-                tf.reduce_sum(tf.cast(
-                    tf.greater_equal(labels, 1), tf.float32
-                    )))
-
-        refined_box_loss = bbox_inside_weights * _smooth_l1_dist(boxes, bbox_targets)
-        refined_box_loss = tf.reshape(refined_box_loss, [-1, 4])
-        refined_box_loss = tf.reduce_sum(refined_box_loss, axis=1)
-        refined_box_loss = refined_box_lw * tf.reduce_mean(refined_box_loss) # * frac_
-        tf.add_to_collection(tf.GraphKeys.LOSSES, refined_box_loss)
-        refined_box_losses.append(refined_box_loss)
-
-        labels = slim.one_hot_encoding(labels, num_classes, on_value=1.0, off_value=0.0)
-        refined_cls_loss = refined_cls_lw * tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=classes) 
-        refined_cls_loss = tf.reduce_mean(refined_cls_loss) # * frac_
-        tf.add_to_collection(tf.GraphKeys.LOSSES, refined_cls_loss)
-        refined_cls_losses.append(refined_cls_loss)
+        # refine_batch.append(
+        #         tf.reduce_sum(tf.cast(
+        #             tf.greater_equal(labels, 0), tf.float32
+        #             )))
+        # refine_batch_pos.append(
+        #         tf.reduce_sum(tf.cast(
+        #             tf.greater_equal(labels, 1), tf.float32
+        #             )))
+        #
+        # refined_box_loss = bbox_inside_weights * _smooth_l1_dist(boxes, bbox_targets)
+        # refined_box_loss = tf.reshape(refined_box_loss, [-1, 4])
+        # refined_box_loss = tf.reduce_sum(refined_box_loss, axis=1)
+        # refined_box_loss = refined_box_lw * tf.reduce_mean(refined_box_loss) # * frac_
+        # tf.add_to_collection(tf.GraphKeys.LOSSES, refined_box_loss)
+        # refined_box_losses.append(refined_box_loss)
+        #
+        # labels = slim.one_hot_encoding(labels, num_classes, on_value=1.0, off_value=0.0)
+        # refined_cls_loss = refined_cls_lw * tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=classes)
+        # refined_cls_loss = tf.reduce_mean(refined_cls_loss) # * frac_
+        # tf.add_to_collection(tf.GraphKeys.LOSSES, refined_cls_loss)
+        # refined_cls_losses.append(refined_cls_loss)
 
         ### mask loss
         # mask of shape (N, h, w, num_classes)
-        masks = outputs['mask']['mask']
+        # masks = outputs['mask']['mask']
         # mask_shape = tf.shape(masks)
         # masks = tf.reshape(masks, (mask_shape[0], mask_shape[1],
         #                            mask_shape[2], tf.cast(mask_shape[3]/2, tf.int32), 2))
-        labels, mask_targets, mask_inside_weights = \
-          mask_encoder(gt_masks, gt_boxes, rois, num_classes, 28, 28, scope='MaskEncoder')
-        labels, masks, mask_targets, mask_inside_weights = \
-                _filter_negative_samples(tf.reshape(labels, [-1]), [
-                    tf.reshape(labels, [-1]),
-                    masks,
-                    mask_targets, 
-                    mask_inside_weights, 
-                    ])
+        # labels, mask_targets, mask_inside_weights = \
+        #   mask_encoder(gt_masks, gt_boxes, rois, num_classes, 28, 28, scope='MaskEncoder')
+        # labels, masks, mask_targets, mask_inside_weights = \
+        #         _filter_negative_samples(tf.reshape(labels, [-1]), [
+        #             tf.reshape(labels, [-1]),
+        #             masks,
+        #             mask_targets,
+        #             mask_inside_weights,
+        #             ])
         # _, frac_ = _get_valid_sample_fraction(labels)
-        mask_batch.append(
-                tf.reduce_sum(tf.cast(
-                    tf.greater_equal(labels, 0), tf.float32
-                    )))
-        mask_batch_pos.append(
-                tf.reduce_sum(tf.cast(
-                    tf.greater_equal(labels, 1), tf.float32
-                    )))
+        # mask_batch.append(
+        #         tf.reduce_sum(tf.cast(
+        #             tf.greater_equal(labels, 0), tf.float32
+        #             )))
+        # mask_batch_pos.append(
+        #         tf.reduce_sum(tf.cast(
+        #             tf.greater_equal(labels, 1), tf.float32
+        #             )))
         # mask_targets = slim.one_hot_encoding(mask_targets, 2, on_value=1.0, off_value=0.0)
         # mask_binary_loss = mask_lw * tf.losses.softmax_cross_entropy(mask_targets, masks)
         # NOTE: w/o competition between classes. 
-        mask_targets = tf.cast(mask_targets, tf.float32)
-        mask_loss = mask_lw * tf.nn.sigmoid_cross_entropy_with_logits(labels=mask_targets, logits=masks) 
-        mask_loss = tf.reduce_mean(mask_loss) 
-        mask_loss = tf.cond(tf.greater(tf.size(labels), 0), lambda: mask_loss, lambda: tf.constant(0.0))
-        tf.add_to_collection(tf.GraphKeys.LOSSES, mask_loss)
-        mask_losses.append(mask_loss)
+        # mask_targets = tf.cast(mask_targets, tf.float32)
+        # mask_loss = mask_lw * tf.nn.sigmoid_cross_entropy_with_logits(labels=mask_targets, logits=masks)
+        # mask_loss = tf.reduce_mean(mask_loss)
+        # mask_loss = tf.cond(tf.greater(tf.size(labels), 0), lambda: mask_loss, lambda: tf.constant(0.0))
+        # tf.add_to_collection(tf.GraphKeys.LOSSES, mask_loss)
+        # mask_losses.append(mask_loss)
 
   rpn_box_losses = tf.add_n(rpn_box_losses)
   rpn_cls_losses = tf.add_n(rpn_cls_losses)
-  refined_box_losses = tf.add_n(refined_box_losses)
-  refined_cls_losses = tf.add_n(refined_cls_losses)
-  mask_losses = tf.add_n(mask_losses)
-  losses = [rpn_box_losses, rpn_cls_losses, refined_box_losses, refined_cls_losses, mask_losses]
+  # refined_box_losses = tf.add_n(refined_box_losses)
+  # refined_cls_losses = tf.add_n(refined_cls_losses)
+  # mask_losses = tf.add_n(mask_losses)
+  losses = [rpn_box_losses, rpn_cls_losses]#, refined_box_losses, refined_cls_losses, mask_losses]
   total_loss = tf.add_n(losses)
 
   rpn_batch = tf.cast(tf.add_n(rpn_batch), tf.float32)
-  refine_batch = tf.cast(tf.add_n(refine_batch), tf.float32)
-  mask_batch = tf.cast(tf.add_n(mask_batch), tf.float32)
+  # refine_batch = tf.cast(tf.add_n(refine_batch), tf.float32)
+  # mask_batch = tf.cast(tf.add_n(mask_batch), tf.float32)
   rpn_batch_pos = tf.cast(tf.add_n(rpn_batch_pos), tf.float32)
-  refine_batch_pos = tf.cast(tf.add_n(refine_batch_pos), tf.float32)
-  mask_batch_pos = tf.cast(tf.add_n(mask_batch_pos), tf.float32)
+  # refine_batch_pos = tf.cast(tf.add_n(refine_batch_pos), tf.float32)
+  # mask_batch_pos = tf.cast(tf.add_n(mask_batch_pos), tf.float32)
     
-  return total_loss, losses, [rpn_batch_pos, rpn_batch, \
-                              refine_batch_pos, refine_batch, \
-                              mask_batch_pos, mask_batch]
+  return total_loss, losses, [rpn_batch_pos, rpn_batch] #, \
+                     #         refine_batch_pos, refine_batch, \
+                     #         mask_batch_pos, mask_batch]
 
 def decode_output(outputs):
     """decode outputs into boxes and masks"""
@@ -544,13 +544,13 @@ def build(end_points, image_height, image_width, pyramid_map,
     pred_boxes, pred_classes, pred_masks = decode_output(outputs)
     outputs['pred_boxes'] = pred_boxes
     outputs['pred_classes'] = pred_classes
-    outputs['pred_masks'] = pred_masks
+    # outputs['pred_masks'] = pred_masks
 
     # rpn visualization
     visualize_bb(end_points["input"], outputs['roi']["box"], name="rpn_bb_visualization")
 
     # final network visualization
-    first_mask = outputs['mask']['mask'][:1]
-    first_mask = tf.transpose(first_mask, [3, 1, 2, 0])
-    visualize_final_predictions(outputs['final_boxes']["box"], end_points["input"], first_mask)
+    #first_mask = outputs['mask']['mask'][:1]
+    #first_mask = tf.transpose(first_mask, [3, 1, 2, 0])
+    #visualize_final_predictions(outputs['final_boxes']["box"], end_points["input"], first_mask)
     return outputs

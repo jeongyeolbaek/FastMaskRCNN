@@ -130,7 +130,7 @@ tf.app.flags.DEFINE_string(
     'Specifies how the learning rate is decayed. One of "fixed", "exponential",'
     ' or "polynomial"')
 
-tf.app.flags.DEFINE_float('learning_rate', 0.002,
+tf.app.flags.DEFINE_float('learning_rate', 0.001,
                           'Initial learning rate.')
 
 tf.app.flags.DEFINE_float(
@@ -220,7 +220,7 @@ tf.app.flags.DEFINE_boolean(
     'When restoring a checkpoint would ignore missing variables.')
 
 tf.app.flags.DEFINE_boolean(
-    'restore_previous_if_exists', True,
+    'restore_previous_if_exists', False,
     'When restoring a checkpoint would ignore missing variables.')
 
 #######################
