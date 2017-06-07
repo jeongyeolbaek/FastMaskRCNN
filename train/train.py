@@ -47,6 +47,7 @@ def solve(global_step):
 
     update_ops = []
     variables_to_train = _get_variables_to_train()
+    print(variables_to_train)
     # update_op = optimizer.minimize(total_loss)
     gradients = optimizer.compute_gradients(total_loss, var_list=variables_to_train)
     grad_updates = optimizer.apply_gradients(gradients, 
@@ -65,7 +66,7 @@ def restore(sess):
      """choose which param to restore"""
      if FLAGS.restore_previous_if_exists:
         try:
-            checkpoint_path = tf.train.latest_checkpoint(FLAGS.train_dir)
+            checkpoint_path = FLAGS.checkpoint_path
             restorer = tf.train.Saver()
             restorer.restore(sess, checkpoint_path)
             print ('restored previous model %s from %s'\
@@ -77,30 +78,30 @@ def restore(sess):
                     % (FLAGS.train_dir, checkpoint_path))
             time.sleep(2)
 
-     if FLAGS.pretrained_model:
-        if tf.gfile.IsDirectory(FLAGS.pretrained_model):
-            checkpoint_path = tf.train.latest_checkpoint(FLAGS.pretrained_model)
-        else:
-            checkpoint_path = FLAGS.pretrained_model
-
-        if FLAGS.checkpoint_exclude_scopes is None:
-            FLAGS.checkpoint_exclude_scopes='pyramid'
-        if FLAGS.checkpoint_include_scopes is None:
-            FLAGS.checkpoint_include_scopes='resnet_v1_50'
-
-        vars_to_restore = get_var_list_to_restore()
-        for var in vars_to_restore:
-            print ('restoring ', var.name)
-      
-        try:
-           restorer = tf.train.Saver(vars_to_restore)
-           restorer.restore(sess, checkpoint_path)
-           print ('Restored %d(%d) vars from %s' %(
-               len(vars_to_restore), len(tf.global_variables()),
-               checkpoint_path ))
-        except:
-           print ('Checking your params %s' %(checkpoint_path))
-           raise
+     # if FLAGS.pretrained_model:
+     #    if tf.gfile.IsDirectory(FLAGS.pretrained_model):
+     #        checkpoint_path = tf.train.latest_checkpoint(FLAGS.pretrained_model)
+     #    else:
+     #        checkpoint_path = FLAGS.pretrained_model
+     #
+     #    if FLAGS.checkpoint_exclude_scopes is None:
+     #        FLAGS.checkpoint_exclude_scopes='pyramid'
+     #    if FLAGS.checkpoint_include_scopes is None:
+     #        FLAGS.checkpoint_include_scopes='resnet_v1_50'
+     #
+     #    vars_to_restore = get_var_list_to_restore()
+     #    for var in vars_to_restore:
+     #        print ('restoring ', var.name)
+     #
+     #    try:
+     #       restorer = tf.train.Saver(vars_to_restore)
+     #       restorer.restore(sess, checkpoint_path)
+     #       print ('Restored %d(%d) vars from %s' %(
+     #           len(vars_to_restore), len(tf.global_variables()),
+     #           checkpoint_path ))
+     #    except:
+     #       print ('Checking your params %s' %(checkpoint_path))
+     #       raise
     
 def train():
     """The main function that runs training"""
@@ -126,8 +127,10 @@ def train():
     image = tf.reshape(image, (im_shape[0], im_shape[1], im_shape[2], 3))
 
     ## network
-    logits, end_points, pyramid_map = network.get_network(FLAGS.network, image,
-            weight_decay=FLAGS.weight_decay)
+    logits, end_points, pyramid_map = network.get_network(FLAGS.network,
+            image,
+            weight_decay=FLAGS.weight_decay,
+            is_training=True)
     outputs = pyramid_network.build(end_points, im_shape[1], im_shape[2], pyramid_map,
             num_classes=81,
             base_anchors=9,
@@ -157,7 +160,7 @@ def train():
     sess.run(init_op)
 
     summary_op = tf.summary.merge_all()
-    logdir = os.path.join(FLAGS.train_dir, "lambda=0.2",strftime('%Y%m%d%H%M%S', gmtime()))
+    logdir = os.path.join(FLAGS.train_dir,strftime('%Y%m%d%H%M%S', gmtime()))
     if not os.path.exists(logdir):
         os.makedirs(logdir)
     summary_writer = tf.summary.FileWriter(logdir, graph=sess.graph)
