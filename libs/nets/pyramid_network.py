@@ -554,5 +554,6 @@ def build(end_points, image_height, image_width, pyramid_map,
     # final network visualization
     #first_mask = outputs['mask']['mask'][:1]
     #first_mask = tf.transpose(first_mask, [3, 1, 2, 0])
-    #visualize_final_predictions(outputs['final_boxes']["box"], end_points["input"], first_mask)
+    # visualize_final_predictions(outputs['final_boxes']["box"], end_points["input"], first_mask)
+    visualize_final_predictions(outputs['final_boxes']["box"], end_points["input"], None)
     return outputs

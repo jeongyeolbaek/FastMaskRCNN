@@ -35,5 +35,5 @@ def visualize_input_image(image):
 
 
 def visualize_final_predictions(boxes, image, masks):
-    visualize_masks(masks, "pred_mask")
+    # visualize_masks(masks, "pred_mask")
     visualize_bb(image, boxes, "final_bb_pred")
