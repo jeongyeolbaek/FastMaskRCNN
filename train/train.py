@@ -209,7 +209,7 @@ def train():
             summary_writer.flush()
 
         if (step % 10000 == 0 or step + 1 == FLAGS.max_iters) and step != 0:
-            checkpoint_path = os.path.join(logdir,'/model.ckpt')
+            checkpoint_path = os.path.join(logdir+'/model.ckpt')
             saver.save(sess, checkpoint_path, global_step=step)
 
         if coord.should_stop():
