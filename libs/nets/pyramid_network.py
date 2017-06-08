@@ -117,6 +117,12 @@ def _filter_negative_samples(labels, tensors):
     # return tensors
     keeps = tf.where(tf.greater_equal(labels, 0))
     keeps = tf.reshape(keeps, [-1])
+    keeps_p = tf.Print(keeps, message="Keeps", data=[tf.shape(keeps)])
+    all_classes_p = tf.Print(tensors[0], message="All", data=[tf.shape(tensors[0])])
+
+    # tf.add_to_collection('prints', keeps_p)
+    # tf.add_to_collection('prints', all_classes_p)
+
 
     filtered = []
     for t in tensors:
@@ -125,7 +131,39 @@ def _filter_negative_samples(labels, tensors):
         filtered.append(f)
 
     return filtered
-        
+
+
+def sample_n_negative_labels(labels, tensors, n):
+    """keeps only samples with none-negative labels
+    Params:
+    -----
+    labels: of shape (N,)
+    tensors: a list of tensors, each of shape (N, .., ..) the first axis is sample number
+
+    Returns:
+    -----
+    tensors: filtered tensors
+    """
+    # return tensors
+    keeps = tf.where(tf.equal(labels, -1))
+    keeps = tf.reshape(keeps, [-1])
+    keeps = tf.random_shuffle(keeps)[:n]
+
+    keeps_p = tf.Print(keeps, message="Keeps negative", data=[tf.shape(keeps)])
+    all_classes_p = tf.Print(labels, message="All negative", data=[tf.shape(labels)])
+
+    # tf.add_to_collection('prints', keeps_p)
+    # tf.add_to_collection('prints', all_classes_p)
+
+    filtered = []
+    for t in tensors:
+        tf.assert_equal(tf.shape(t)[0], tf.shape(labels)[0])
+        f = tf.gather(t, keeps)
+        filtered.append(f)
+
+    return filtered
+
+
 def _add_jittered_boxes(rois, scores, batch_inds, gt_boxes, jitter=0.1):
     ws = gt_boxes[:, 2] - gt_boxes[:, 0]
     hs = gt_boxes[:, 3] - gt_boxes[:, 1]
@@ -373,20 +411,29 @@ def build_losses(pyramid, outputs, gt_boxes, gt_masks,
             # anchor_scales = [2 **(i-2), 2 ** (i-1), 2 **(i)]
             # all_anchors = gen_all_anchors(height, width, stride, anchor_scales)
             all_anchors = outputs['rpn'][p]['anchor']
+
             labels, bbox_targets, bbox_inside_weights = \
               anchor_encoder(splitted_gt_boxes, all_anchors, height, width, stride, scope='AnchorEncoder')
+            labels_before = tf.Print(labels, message="Before encoding", data=[labels])
+            tf.add_to_collection('prints', labels_before)
+
             boxes = outputs['rpn'][p]['box']
             classes = tf.reshape(outputs['rpn'][p]['cls'], (1, height, width, base_anchors, 2))
-
-            labels, classes, boxes, bbox_targets, bbox_inside_weights = \
-                    _filter_negative_samples(tf.reshape(labels, [-1]), [
+            positive_labels, positive_classes, boxes, bbox_targets, bbox_inside_weights = \
+                    _filter_negative_samples(labels, [
                         tf.reshape(labels, [-1]),
                         tf.reshape(classes, [-1, 2]),
                         tf.reshape(boxes, [-1, 4]),
                         tf.reshape(bbox_targets, [-1, 4]),
                         tf.reshape(bbox_inside_weights, [-1, 4])
                         ])
-            # _, frac_ = _get_valid_sample_fraction(labels)
+            negative_labels, negative_classes = sample_n_negative_labels(labels, [
+                                                                tf.reshape(labels, [-1]),
+                                                                tf.reshape(classes, [-1, 2])],
+                                                                tf.shape(positive_labels)[0])
+            labels = tf.reshape([positive_labels, negative_labels], [-1])
+            classes = tf.reshape([positive_classes, negative_classes], [-1, 2])
+            # _, frac_ = _get_valid_sample_fraction(positive_labels)
             rpn_batch.append(
                     tf.reduce_sum(tf.cast(
                         tf.greater_equal(labels, 0), tf.float32
@@ -408,12 +455,19 @@ def build_losses(pyramid, outputs, gt_boxes, gt_masks,
             # the loss become smaller by a factor (None_negtive_labels / all_labels)
             # the BEST practise still should be gathering all none-negative examples
             labels = slim.one_hot_encoding(labels, 2, on_value=1.0, off_value=0.0) # this will set -1 label to all zeros
-            rpn_cls_loss = rpn_cls_lw * tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=classes) 
+            lables_loss =  tf.Print(labels, message="Before loss", data=[tf.shape(labels)])
+            tf.add_to_collection('prints', lables_loss)
+
+            rpn_cls_loss = rpn_cls_lw * tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=classes)
             rpn_cls_loss = tf.reduce_mean(rpn_cls_loss)
             tf.summary.scalar('rpn_cls_loss', rpn_cls_loss)
             tf.add_to_collection(tf.GraphKeys.LOSSES, rpn_cls_loss)
             rpn_cls_losses.append(rpn_cls_loss)
-            
+
+
+
+
+
 
         ### refined loss
         # 1. encode ground truth
